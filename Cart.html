@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตะกร้าสินค้า</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* Basic Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 50px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        nav ul li {
+            margin: 0 10px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background-color: #f5f5f5;
+            transition: background-color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            background-color: #ddd;
+        }
+
+        .cart-container {
+            padding: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-item img {
+            width: 50px;
+            height: auto;
+        }
+
+        .remove-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background-color: #e60000;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        #pay-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #pay-button:hover {
+            background-color: #0056b3;
+        }
+
+        canvas {
+            margin-top: 20px;
+            display: none; /* Hide by default */
+        }
+
+        .item-count {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="Logo Project/logofinal-removebg-preview.png" alt="I Got Shoes">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="cart-container">
+        <h2>ตะกร้าสินค้า</h2>
+        <div id="cart-items"></div>
+        <div class="total" id="total-price"></div> <!-- Element for displaying total price -->
+        <button id="pay-button">ชำระเงิน</button> <!-- Payment button -->
+        <canvas id="qr-code" style="margin-top: 20px;"></canvas> <!-- QR Code display -->
+        <div class="item-count" id="item-count"></div> <!-- Display item count -->
+    </main>
+
+    <footer>
+        <p>© 2024 I Got Shoes. All Rights Reserved.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script>
+        window.onload = function() {
+            const cartItems = JSON.parse(localStorage.getItem('nikeCart')) || [];
+            const cartDiv = document.getElementById('cart-items');
+            const totalPriceDiv = document.getElementById('total-price');
+            const payButton = document.getElementById('pay-button');
+            const qrCodeCanvas = document.getElementById('qr-code');
+            const qr = new QRious({
+                element: qrCodeCanvas,
+                size: 200,
+            });
+
+            let totalAmount = 0; // Variable to hold total amount
+
+            function updateCart() {
+                cartDiv.innerHTML = ''; // Clear current cart items
+                totalAmount = 0; // Reset total amount
+                cartItems.forEach((item, index) => {
+                    const cartItem = document.createElement('div');
+                    cartItem.classList.add('cart-item');
+                    cartItem.innerHTML = `
+                        <img src="${item.img}" alt="${item.name}">
+                        <div>
+                            <h4>${item.name}</h4>
+                            <p>ราคา: ${item.price} บาท</p>
+                            <p>ที่อยู่: ${item.address}</p>
+                        </div>
+                        <button class="remove-button" data-index="${index}">ลบ</button>
+                    `;
+                    cartDiv.appendChild(cartItem);
+
+                    totalAmount += item.price; // Add the price to total amount
+                });
+
+                totalPriceDiv.innerHTML = cartItems.length === 0 ? '' : `ยอดรวม: ${totalAmount} บาท`; // Display total price
+                payButton.style.display = cartItems.length === 0 ? 'none' : 'block'; // Show/hide payment button
+                document.getElementById('item-count').innerText = `จำนวนสินค้าทั้งหมด: ${cartItems.length} ชิ้น`; // Display item count
+            }
+
+            updateCart(); // Initial cart update
+
+            payButton.onclick = function() {
+                const paymentLink = `https://paymentgateway.ktb.co.th/payment?qrcode=${totalAmount}`; // URL ของระบบชำระเงินของกรุงไทย
+                qr.set({
+                    value: paymentLink // Set QR code to the payment URL
+                });
+                qrCodeCanvas.style.display = 'block'; // Show QR code
+            };
+
+            cartDiv.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-button')) {
+                    const index = event.target.dataset.index; // Get the index of the item to remove
+                    cartItems.splice(index, 1); // Remove the item from cartItems
+                    localStorage.setItem('nikeCart', JSON.stringify(cartItems)); // Update localStorage
+                    updateCart(); // Update cart display
+                }
+            });
+        };
+    </script>
+</body>
+</html>
